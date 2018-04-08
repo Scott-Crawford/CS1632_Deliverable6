@@ -2,7 +2,7 @@
 class ArgsChecker
   def check_args(arr)
     if arr.count < 1
-      0
+      run_repl
     else
       check_array_arguments(arr)
       read_file(arr)
