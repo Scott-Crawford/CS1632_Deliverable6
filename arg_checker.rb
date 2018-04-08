@@ -1,5 +1,6 @@
 # Class that checks the file argument provided by user.
 class ArgsChecker
+  @stack = []
   def check_args(arr)
     if arr.count < 1
       run_repl
@@ -30,10 +31,38 @@ class ArgsChecker
       end
     end
   end
+
   def handle_input(input)
-    eval(input)
+    @stack = []
+    input = input.split(' ')
+    input.each do |i|
+      if %w[+ - * /].include? i
+        handle_operators i
+      else
+        @stack.push i
+      end
+    end
+    puts @stack
   end
+
+  def handle_operators(opt)
+    a = @stack.pop.to_i
+    b = @stack.pop.to_i
+    c = 0
+    if opt == '+'
+      c = a + b
+    elsif opt == '-'
+      c = b - a
+    elsif opt == '*'
+      c = a * b
+    elsif opt == '/'
+      c = b / a
+    end
+    @stack.push c
+  end
+
   def run_repl
+    @stack = [] if @stack.nil?
     repl = lambda { |prompt|
       print prompt
       handle_input(gets.chomp!)
