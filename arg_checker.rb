@@ -30,18 +30,4 @@ class ArgsChecker
       end
     end
   end
-
-  def handle_input(input)
-    eval(input)
-  end
-
-  def run_repl
-    repl = lambda { |prompt|
-      print prompt
-      handle_input(gets.chomp!)
-    }
-    loop do
-      repl['> ']
-    end
-  end
 end
