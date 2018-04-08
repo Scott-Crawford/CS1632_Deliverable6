@@ -2,7 +2,7 @@
 class ArgsChecker
   def check_args(arr)
     if arr.count < 1
-      run_repl
+      0
     else
       check_array_arguments(arr)
       read_file(arr)
@@ -28,6 +28,18 @@ class ArgsChecker
         puts 'Supplied file does not have the .rpn extension!'
         abort
       end
+    end
+  end
+  def handle_input(input)
+    eval(input)
+  end
+  def run_repl
+    repl = lambda { |prompt|
+      print prompt
+      handle_input(gets.chomp!)
+    }
+    loop do
+      repl['> ']
     end
   end
 end
