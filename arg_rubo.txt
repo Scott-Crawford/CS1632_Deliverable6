@@ -3,11 +3,8 @@ C
 
 Offenses:
 
-arg_checker.rb:19:5: C: Style/GuardClause: Use a guard clause instead of wrapping the code inside a conditional expression.
-    unless (all_files & input).length == input.length
-    ^^^^^^
-arg_checker.rb:26:5: C: Security/Eval: The use of eval is a serious security risk.
+arg_checker.rb:35:5: C: Security/Eval: The use of eval is a serious security risk.
     eval(input)
     ^^^^
 
-1 file inspected, 2 offenses detected
+1 file inspected, 1 offense detected
