@@ -7,7 +7,8 @@ class ArgsChecker
     if arr.count < 1
       run_repl
     else
-      check_array_arguments(arr)
+      value = check_array_arguments(arr)
+      check_value(value)
       read_file(arr)
     end
   end
@@ -19,17 +20,21 @@ class ArgsChecker
         curr = File.readlines(file_name)
         all_files.push(curr)
       else
-        puts 'File does not exist with given path.'
+        puts "File does not exist with given path."
       end
     end
     all_files
   end
 
+  def check_value(value)
+    exit! if value == 'INVALID'
+  end
+
   def check_array_arguments(input)
     input.each do |file|
-      if file.split('.')[1] != 'rpn'
+      if (file[-3..-1] || file).strip != 'rpn'
         puts 'Supplied file does not have the .rpn extension!'
-        abort
+        return 'INVALID'
       end
     end
   end
