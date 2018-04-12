@@ -1,6 +1,7 @@
 # Class that checks the file argument provided by user.
 class ArgsChecker
   @stack = []
+  @line_counter = 0
   @map = {}
 
   def check_args(arr)
@@ -20,7 +21,7 @@ class ArgsChecker
         curr = File.readlines(file_name)
         all_files.push(curr)
       else
-        puts "File does not exist with given path."
+        puts 'File does not exist with given path.'
       end
     end
     all_files
@@ -46,7 +47,7 @@ class ArgsChecker
   end
 
   def check_first_element(input)
-    if %w[LET PRINT QUIT].include?(input[0])
+    if %w[LET PRINT QUIT].any? { |s| s.casecmp(input[0]).zero? }
       if input[0] == 'QUIT'
         exit!
       elsif input[0] == 'LET'
@@ -58,9 +59,16 @@ class ArgsChecker
     end
   end
 
+  def check_variable_in_map(input)
+    input.each do |var|
+      puts "#{var} is not initialized" unless @map.key?(var)
+    end
+  end
+
   def handle_input(input)
     @stack = []
     input = input.split(' ')
+    puts @map[input[0]] if input.length == 1 && input[0].match(/[a-zA-Z]/)
     do_math(input) unless check_first_element(input)
     puts @stack
   end
@@ -70,6 +78,7 @@ class ArgsChecker
       if %w[+ - * /].include?(i)
         handle_operators(i)
       else
+        # puts "Line #{@line_counter}: Unkown keyword #{i}"
         @stack.push(i)
       end
     end
@@ -96,6 +105,7 @@ class ArgsChecker
     }
     loop do
       repl['> ']
+      # increment line counter here
     end
   end
 end
