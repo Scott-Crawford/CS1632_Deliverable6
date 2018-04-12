@@ -47,7 +47,8 @@ class ArgsChecker
   end
 
   def check_first_element(input)
-    if %w[LET PRINT QUIT].any? { |s| s.casecmp(input[0]).zero? }
+    input[0] = input[0].upcase
+    if %w[LET PRINT QUIT].include?(input[0])
       if input[0] == 'QUIT'
         exit!
       elsif input[0] == 'LET'
@@ -68,7 +69,7 @@ class ArgsChecker
   def handle_input(input)
     @stack = []
     input = input.split(' ')
-    puts @map[input[0]] if input.length == 1 && input[0].match(/[a-zA-Z]/)
+    puts @map[input[0]] if input.length == 1 && input[0].length == 1 && input[0].match(/[a-zA-Z]/)
     do_math(input) unless check_first_element(input)
     puts @stack
   end
@@ -82,6 +83,7 @@ class ArgsChecker
         @stack.push(i)
       end
     end
+    @stack[0]
   end
 
   def handle_operators(opt)
