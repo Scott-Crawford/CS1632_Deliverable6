@@ -1,13 +1,15 @@
 # Class that checks the file argument provided by user.
 class ArgsChecker
   @stack = []
+  @line_counter = 0
   @map = {}
 
   def check_args(arr)
     if arr.count < 1
       run_repl
     else
-      check_array_arguments(arr)
+      value = check_array_arguments(arr)
+      check_value(value)
       read_file(arr)
     end
   end
@@ -25,11 +27,15 @@ class ArgsChecker
     all_files
   end
 
+  def check_value(value)
+    exit! if value == 'INVALID'
+  end
+
   def check_array_arguments(input)
     input.each do |file|
-      if file.split('.')[1] != 'rpn'
+      if (file[-3..-1] || file).strip != 'rpn'
         puts 'Supplied file does not have the .rpn extension!'
-        abort
+        return 'INVALID'
       end
     end
   end
@@ -37,14 +43,18 @@ class ArgsChecker
   def define_variable(input)
     @map = {} if @map.nil?
     items = input[2..input.length - 1]
-    @map[input[1]] = do_math(items)
+    val = do_math(items)
+    @map[input[1].upcase] = val[0] unless val.empty?
+    puts @map[input[1].upcase] unless val.empty?
+    @stack.clear
   end
 
   def check_first_element(input)
-    if %w[LET PRINT QUIT].include?(input[0])
-      if input[0] == 'QUIT'
+    first_element = input[0].upcase
+    if %w[LET PRINT QUIT].include?(first_element)
+      if first_element == 'QUIT'
         exit!
-      elsif input[0] == 'LET'
+      elsif first_element == 'LET'
         define_variable(input)
       else
         do_math(input[1..input.length - 1])
@@ -53,21 +63,43 @@ class ArgsChecker
     end
   end
 
+  def call_error(code, var)
+    puts "Line BLAH: #{var} is not initialized" if code == 1
+    @stack.clear
+  end
+
+  def handle_more(input, val)
+    if input.length == 1 && input[0].length == 1 && input[0].match(/[a-zA-Z]/) && @map.key?(input[0].upcase)
+      puts @map[input[0].upcase]
+    else
+      do_math(input) unless val
+      puts @stack[0] unless @stack.empty? || @stack[0].nil?
+    end
+  end
+
   def handle_input(input)
     @stack = []
     input = input.split(' ')
-    do_math(input) unless check_first_element(input)
-    puts @stack
+    val = check_first_element(input)
+    handle_more(input, val)
   end
 
   def do_math(input)
     input.each do |i|
       if %w[+ - * /].include?(i)
         handle_operators(i)
+      elsif i.length == 1 && i.match(/[a-zA-Z]/)
+        if @map.key?(i.upcase)
+          @stack.push(@map[i.upcase])
+        else
+          call_error(1, i)
+          return []
+        end
       else
         @stack.push(i)
       end
     end
+    @stack
   end
 
   def handle_operators(opt)
@@ -84,6 +116,7 @@ class ArgsChecker
   end
 
   def run_repl
+    @map = {} if @map.nil?
     @stack = [] if @stack.nil?
     repl = lambda { |prompt|
       print prompt
@@ -91,6 +124,7 @@ class ArgsChecker
     }
     loop do
       repl['> ']
+      # increment line counter here
     end
   end
 end
