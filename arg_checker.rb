@@ -1,3 +1,4 @@
+require_relative 'file_reader'
 # Class that checks the file argument provided by user.
 class ArgsChecker
   @stack = []
@@ -8,35 +9,11 @@ class ArgsChecker
     if arr.count < 1
       run_repl
     else
-      value = check_array_arguments(arr)
-      check_value(value)
-      read_file(arr)
-    end
-  end
-
-  def read_file(arr)
-    all_files = curr = []
-    arr.each do |file_name|
-      if File.file?(file_name)
-        curr = File.readlines(file_name)
-        all_files.push(curr)
-      else
-        puts 'File does not exist with given path.'
-      end
-    end
-    all_files
-  end
-
-  def check_value(value)
-    exit! if value == 'INVALID'
-  end
-
-  def check_array_arguments(input)
-    input.each do |file|
-      if (file[-3..-1] || file).strip != 'rpn'
-        puts 'Supplied file does not have the .rpn extension!'
-        return 'INVALID'
-      end
+      fr = FileReader.new
+      value = fr.check_array_arguments(arr)
+      fr.check_value(value)
+      concat = fr.read_file(arr)
+      fr.execute_rpn(concat)
     end
   end
 
@@ -50,7 +27,7 @@ class ArgsChecker
   end
 
   def check_first_element(input)
-    first_element = input[0].upcase
+    first_element = input[0].upcase.strip
     if %w[LET PRINT QUIT].include?(first_element)
       if first_element == 'QUIT'
         exit!
