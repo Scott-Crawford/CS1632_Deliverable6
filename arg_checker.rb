@@ -44,8 +44,9 @@ class ArgsChecker
     @map = {} if @map.nil?
     items = input[2..input.length - 1]
     val = do_math(items)
-    @map[input[1].upcase] = val[0] unless val.empty?
-    puts @map[input[1].upcase] unless val.empty?
+    @map[input[1].upcase] = val[0] unless val.empty? || @stack.length > 1
+    call_error(3, @stack.length) if @stack.length > 1
+    puts @map[input[1].upcase] unless val.empty? || @stack.length > 1
     @stack.clear
   end
 
@@ -65,7 +66,8 @@ class ArgsChecker
 
   def call_error(code, var)
     puts "Line BLAH: #{var} is not initialized" if code == 1
-	puts "Line BLAH: #{var} elements in stack after evaluation" if code == 3
+    puts "Line BLAH: Operator #{var} applied to empty stack" if code == 2
+    puts "Line BLAH: #{var} elements in stack after evaluation" if code == 3
     @stack.clear
   end
 
@@ -74,7 +76,7 @@ class ArgsChecker
       puts @map[input[0].upcase]
     else
       do_math(input) unless val
-	  call_error(3, @stack.length) if @stack.length > 1
+      call_error(3, @stack.length) if @stack.length > 1
       puts @stack[0] unless @stack.empty? || @stack[0].nil? || @stack.length > 1
     end
   end
@@ -89,7 +91,9 @@ class ArgsChecker
   def do_math(input)
     input.each do |i|
       if %w[+ - * /].include?(i)
-        handle_operators(i)
+        unless handle_operators(i)
+          return []
+        end
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
         if @map.key?(i.upcase)
           @stack.push(@map[i.upcase])
@@ -105,16 +109,26 @@ class ArgsChecker
   end
 
   def handle_operators(opt)
-    operands = init_operands
-    operands[2] = operands[1].send opt, operands[0]
-    @stack.push(operands[2])
+    operands = init_operands(opt)
+    if operands.empty?
+      false
+    else
+      operands[2] = operands[1].send opt, operands[0]
+      @stack.push(operands[2])
+      true
+    end
   end
 
-  def init_operands
-    a = @stack.pop.to_i
-    b = @stack.pop.to_i
-    c = 0
-    [a, b, c]
+  def init_operands(opt)
+    if @stack.length < 2
+      call_error(2, opt)
+      []
+    else
+      a = @stack.pop.to_i
+      b = @stack.pop.to_i
+      c = 0
+      [a, b, c]
+    end
   end
 
   def run_repl
