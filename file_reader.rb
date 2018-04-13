@@ -9,9 +9,7 @@ class FileReader
     arr.each do |file_name|
       if File.file?(file_name)
         curr = File.readlines(file_name)
-        curr.each do |element|
-          element.chomp!
-        end
+        curr.each(&:chomp!)
         all_files.push(curr)
       else
         puts 'File does not exist with given path.'
@@ -35,19 +33,23 @@ class FileReader
 
   def execute_rpn(file)
     file.each do |line|
-      check_first_file_element(line)
+      line.each do |inner|
+        check_first_file_element(inner)
+      end
     end
   end
 
   def check_first_file_element(input)
-    first_element = input[0].split(' ')[0].strip
-    if %w[LET PRINT QUIT].include?(first_element)
-      if first_element == 'QUIT'
+    @stack = []
+    first_element = input.split(' ')
+    if %w[LET PRINT QUIT].include?(first_element[0])
+      if first_element[0] == 'QUIT'
         exit!
-      elsif first_element == 'LET'
-        define_variable(input[0])
-      else
-        do_math(input[1..input.length - 1])
+      elsif first_element[0] == 'LET'
+        define_variable(first_element)
+      elsif first_element[0] == 'PRINT'
+        do_math(first_element[1..first_element.length - 1])
+        puts @stack[0]
       end
       true
     end
@@ -55,32 +57,14 @@ class FileReader
 
   def define_variable(input)
     @map = {} if @map.nil?
-    items = input[2..input.length - 1]
-    val = do_math(items)
+    val = do_math(input[2..input.length - 1])
     @map[input[1].upcase] = val[0] unless val.empty?
-    puts @map[input[1].upcase] unless val.empty?
     @stack.clear
   end
 
   def call_error(code, var)
     puts "Line BLAH: #{var} is not initialized" if code == 1
     @stack.clear
-  end
-
-  def handle_more(input, val)
-    if input.length == 1 && input[0].length == 1 && input[0].match(/[a-zA-Z]/) && @map.key?(input[0].upcase)
-      puts @map[input[0].upcase]
-    else
-      do_math(input) unless val
-      puts @stack[0] unless @stack.empty? || @stack[0].nil?
-    end
-  end
-
-  def handle_input(input)
-    @stack = []
-    input = input.split(' ')
-    val = check_first_element(input)
-    handle_more(input, val)
   end
 
   def do_math(input)
