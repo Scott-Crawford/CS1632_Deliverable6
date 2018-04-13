@@ -65,6 +65,7 @@ class ArgsChecker
 
   def call_error(code, var)
     puts "Line BLAH: #{var} is not initialized" if code == 1
+	puts "Line BLAH: #{var} elements in stack after evaluation" if code == 3
     @stack.clear
   end
 
@@ -73,7 +74,8 @@ class ArgsChecker
       puts @map[input[0].upcase]
     else
       do_math(input) unless val
-      puts @stack[0] unless @stack.empty? || @stack[0].nil?
+	  call_error(3, @stack.length) if @stack.length > 1
+      puts @stack[0] unless @stack.empty? || @stack[0].nil? || @stack.length > 1
     end
   end
 
