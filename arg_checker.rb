@@ -6,6 +6,7 @@ class ArgsChecker
   @map = {}
 
   def check_args(arr)
+    @line_counter = 0
     if arr.count < 1
       run_repl
     else
@@ -42,9 +43,9 @@ class ArgsChecker
   end
 
   def call_error(code, var)
-    puts "Line BLAH: #{var} is not initialized" if code == 1
-    puts "Line BLAH: Operator #{var} applied to empty stack" if code == 2
-    puts "Line BLAH: #{var} elements in stack after evaluation" if code == 3
+    puts "Line #{@line_counter}: #{var} is not initialized" if code == 1
+    puts "Line #{@line_counter}: Operator #{var} applied to empty stack" if code == 2
+    puts "Line #{@line_counter}: #{var} elements in stack after evaluation" if code == 3
     @stack.clear
   end
 
@@ -59,6 +60,7 @@ class ArgsChecker
   end
 
   def handle_input(input)
+    @line_counter += 1
     @stack = []
     input = input.split(' ')
     val = check_first_element(input)
