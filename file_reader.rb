@@ -5,6 +5,8 @@ class FileReader
   @map = {}
 
   def read_file(arr)
+    @map = {}
+    @line_counter = 0
     all_files = curr = []
     arr.each do |file_name|
       if File.file?(file_name)
@@ -34,6 +36,7 @@ class FileReader
   def execute_rpn(file)
     file.each do |line|
       line.each do |inner|
+        @line_counter+=1
         check_first_file_element(inner)
       end
     end
@@ -49,6 +52,7 @@ class FileReader
         define_variable(first_element)
       elsif first_element[0] == 'PRINT'
         do_math(first_element[1..first_element.length - 1])
+        call_error(3, @stack.length) if @stack.length > 1
         puts @stack[0]
       end
       true
@@ -58,19 +62,30 @@ class FileReader
   def define_variable(input)
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
+    call_error(3, @stack.length) if @stack.length > 1
     @map[input[1].upcase] = val[0] unless val.empty?
     @stack.clear
   end
 
   def call_error(code, var)
-    puts "Line BLAH: #{var} is not initialized" if code == 1
-    @stack.clear
+    if  code == 1
+      print "Line #{@line_counter}: #{var} is not initialized"
+      exit(1)
+    elsif code == 2
+      print "Line #{@line_counter}: Operator #{var} applied to empty stack" 
+      exit(2)
+    elsif code == 3
+      print "Line #{@line_counter}: #{var} elements in stack after evaluation"
+      exit(3)
+    else
+      exit(5)
+    end
   end
 
   def do_math(input)
     input.each do |i|
       if %w[+ - * /].include?(i)
-        handle_operators(i)
+        return [] unless handle_operators(i)
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
         if @map.key?(i.upcase)
           @stack.push(@map[i.upcase])
@@ -86,15 +101,25 @@ class FileReader
   end
 
   def handle_operators(opt)
-    operands = init_operands
-    operands[2] = operands[1].send opt, operands[0]
-    @stack.push(operands[2])
+    operands = init_operands(opt)
+    if operands.empty?
+      false
+    else
+      operands[2] = operands[1].send opt, operands[0]
+      @stack.push(operands[2])
+      true
+    end
   end
 
-  def init_operands
-    a = @stack.pop.to_i
-    b = @stack.pop.to_i
-    c = 0
-    [a, b, c]
+  def init_operands(opt)
+    if @stack.length < 2
+      call_error(2, opt)
+      []
+    else
+      a = @stack.pop.to_i
+      b = @stack.pop.to_i
+      c = 0
+      [a, b, c]
+    end
   end
 end

@@ -117,7 +117,6 @@ class ArgsChecker
     }
     loop do
       repl['> ']
-      # increment line counter here
     end
   end
 end
