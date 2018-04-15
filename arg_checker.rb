@@ -14,18 +14,23 @@ class ArgsChecker
       value = fr.check_array_arguments(arr)
       fr.check_value(value)
       concat = fr.read_file(arr)
-      fr.execute_rpn(concat)
+      vals = fr.execute_rpn(concat)
+      return vals
     end
   end
 
   def define_variable(input)
-    @map = {} if @map.nil?
-    items = input[2..input.length - 1]
-    val = do_math(items)
-    @map[input[1].upcase] = val[0] unless val.empty? || @stack.length > 1
-    call_error(3, @stack.length) if @stack.length > 1
-    puts @map[input[1].upcase] unless val.empty? || @stack.length > 1
-    @stack.clear
+    if input[1].length == 1 && input[1].match(/[a-zA-Z]/)
+      @map = {} if @map.nil?
+      items = input[2..input.length - 1]
+      val = do_math(items)
+      @map[input[1].upcase] = val[0] unless val.empty? || @stack.length > 1
+      call_error(3, @stack.length) if @stack.length > 1
+      puts @map[input[1].upcase] unless val.empty? || @stack.length > 1
+      @stack.clear
+    else
+      call_error(5, nil)
+    end
   end
 
   def check_first_element(input)
@@ -43,9 +48,10 @@ class ArgsChecker
   end
 
   def call_error(code, var)
-    puts "Line #{@line_counter}: #{var} is not initialized" if code == 1
+    puts "Line #{@line_counter}: Variable #{var} is not initialized" if code == 1
     puts "Line #{@line_counter}: Operator #{var} applied to empty stack" if code == 2
     puts "Line #{@line_counter}: #{var} elements in stack after evaluation" if code == 3
+    puts "Line #{@line_counter}: Could not evaluate expression " if code == 5
     @stack.clear
   end
 

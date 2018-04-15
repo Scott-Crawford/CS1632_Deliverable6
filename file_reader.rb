@@ -4,11 +4,12 @@ class FileReader
   @stack = []
   @line_counter = 0
   @map = {}
-  @ie = InitErrors.new
+  @error_data = []
 
   def init_values
     @map = {}
     @line_counter = 0
+    @error_data = []
     all_files = curr = []
     vals = [all_files, curr]
     vals
@@ -43,9 +44,11 @@ class FileReader
   def execute_rpn(file)
     file.each do |line|
       line.each do |inner|
+        @stack = []
         @line_counter += 1
         inner = inner.split(' ')
         check_first_file_element(inner)
+        return @error_data unless @error_data.empty?
       end
     end
   end
@@ -57,39 +60,42 @@ class FileReader
   def branches(input)
     value = quit_branch(input)
     check_value(value)
-    define_variable(input) if input[0] == 'LET'
+    val = define_variable(input) if input[0] == 'LET'
+    return 'INVALID' if val == 'INVALID'
   end
 
   def check_first_file_element(first_element)
-    @stack = []
     if first_element[0] =~ /LET|PRINT|QUIT/
-      branches(first_element)
+      val = branches(first_element)
+      return 'INVALID' if val == 'INVALID'
       if first_element[0] == 'PRINT'
-        do_math(first_element[1..first_element.length - 1])
-        @ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
+        return 'INVALID' if do_math(first_element[1..first_element.length - 1]) == []
+        @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
+        return 'INVALID' if @stack.length > 1
         puts @stack[0]
       end
-      true
     end
   end
 
   def define_variable(input)
-    ie = InitErrors.new
-    ie.exit_five(@line_counter) if input[1].length != 1
+    @error_data = [5, 0, @line_counter] unless input[1].length == 1 && input[1].match(/[a-zA-Z]/)
+    return 'INVALID' unless input[1].length == 1 && input[1].match(/[a-zA-Z]/) || input[1].length == 1
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
-    ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
+    @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
+    return 'INVALID' if @stack.length > 1
     @map[input[1].upcase] = val[0] unless val.empty?
+    return 'INVALID' if val.empty?
     @stack.clear
   end
 
   def do_more_math(input)
-    ie = InitErrors.new
     if @map.key?(input.upcase)
       @stack.push(@map[input.upcase])
+      true
     else
-      ie.call_error(1, input, @line_counter)
-      []
+      @error_data = [1, input, @line_counter]
+      false
     end
   end
 
@@ -98,7 +104,7 @@ class FileReader
       if %w[+ - * /].include?(i)
         return [] unless handle_operators(i)
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
-        do_more_math(i)
+        return [] unless do_more_math(i)
       else
         @stack.push(i)
       end
@@ -118,9 +124,8 @@ class FileReader
   end
 
   def init_operands(opt)
-    ie = InitErrors.new
     if @stack.length < 2
-      ie.call_error(2, opt, @line_counter)
+      @error_data = [2, opt, @line_counter]
       []
     else
       a = @stack.pop.to_i

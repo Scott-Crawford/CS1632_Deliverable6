@@ -2,11 +2,11 @@
 class InitErrors
   def call_error(code, var, line_counter)
     if code == 1
-      print "Line #{line_counter}: #{var} is not initialized"
+      print "Line #{line_counter}: Variable #{var} is not initialized"
       exit(1)
     elsif code == 2
       print "Line #{line_counter}: Operator #{var} applied to empty stack"
-      #exit(2)
+      exit(2)
     elsif code == 3
       print "Line #{line_counter}: #{var} elements in stack after evaluation"
       exit(3)
