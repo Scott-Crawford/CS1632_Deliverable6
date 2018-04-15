@@ -29,14 +29,14 @@ class FileReader
   end
 
   def check_value(value)
-    abort if value == 'INVALID'
+    abort if value == 'INV'
   end
 
   def check_array_arguments(input)
     input.each do |file|
       if (file[-3..-1] || file).strip != 'rpn'
         puts 'Supplied file does not have the .rpn extension!'
-        return 'INVALID'
+        return 'INV'
       end
     end
   end
@@ -54,38 +54,39 @@ class FileReader
   end
 
   def quit_branch(input)
-    return 'INVALID' if input[0] == 'QUIT'
+    return 'INV' if input[0] == 'QUIT'
   end
 
   def branches(input)
     value = quit_branch(input)
     check_value(value)
     val = define_variable(input) if input[0] == 'LET'
-    return 'INVALID' if val == 'INVALID'
+    return 'INV' if val == 'INV'
   end
 
-  def check_first_file_element(first_element)
-    if first_element[0] =~ /LET|PRINT|QUIT/
-      val = branches(first_element)
-      return 'INVALID' if val == 'INVALID'
-      if first_element[0] == 'PRINT'
-        return 'INVALID' if do_math(first_element[1..first_element.length - 1]) == []
+  def check_first_file_element(first_el)
+    if first_el[0] =~ /LET|PRINT|QUIT/
+      val = branches(first_el)
+      return 'INV' if val == 'INV'
+      if first_el[0] == 'PRINT'
+        return 'INV' if do_math(first_el[1..first_el.length - 1]) == []
         @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
-        return 'INVALID' if @stack.length > 1
+        return 'INV' if @stack.length > 1
         puts @stack[0]
       end
     end
   end
 
   def define_variable(input)
-    @error_data = [5, 0, @line_counter] unless input[1].length == 1 && input[1].match(/[a-zA-Z]/)
-    return 'INVALID' unless input[1].length == 1 && input[1].match(/[a-zA-Z]/) || input[1].length == 1
+    c = input[1].length == 1
+    @error_data = [5, 0, @line_counter] unless c && input[1].match(/[a-zA-Z]/)
+    return 'INV' unless c && input[1].match(/[a-zA-Z]/) || c
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
     @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
-    return 'INVALID' if @stack.length > 1
+    return 'INV' if @stack.length > 1
     @map[input[1].upcase] = val[0] unless val.empty?
-    return 'INVALID' if val.empty?
+    return 'INV' if val.empty?
     @stack.clear
   end
 
