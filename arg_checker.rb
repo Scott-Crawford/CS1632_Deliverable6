@@ -52,6 +52,7 @@ class ArgsChecker
     puts "Line #{@line_counter}: Variable #{var} is not initialized" if code == 1
     puts "Line #{@line_counter}: Operator #{var} applied to empty stack" if code == 2
     puts "Line #{@line_counter}: #{var} elements in stack after evaluation" if code == 3
+    puts "Line #{@line_counter}: Unknown keyword #{var}" if code == 4
     puts "Line #{@line_counter}: Could not evaluate expression " if code == 5
     @stack.clear
   end
@@ -66,12 +67,24 @@ class ArgsChecker
     end
   end
 
+  def parse_line(input)
+    input.each do |element|
+      a = element.length == 1 && element.match(/[A-Za-z]/)
+      b = %w[+ - / * LET PRINT QUIT].include?(element.upcase)
+      c = element.to_i.to_s == element
+      call_error(4, element) unless a || b || c
+      return 'INV' unless a || b || c
+    end
+  end
+
   def handle_input(input)
     @line_counter += 1
     @stack = []
     input = input.split(' ')
-    val = check_first_element(input)
-    handle_more(input, val)
+    unless parse_line(input) == 'INV'
+      val = check_first_element(input)
+      handle_more(input, val)
+    end
   end
 
   def do_math(input)
