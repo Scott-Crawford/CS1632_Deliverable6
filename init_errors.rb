@@ -6,15 +6,15 @@ class InitErrors
       exit(1)
     elsif code == 2
       print "Line #{line_counter}: Operator #{var} applied to empty stack"
-      exit(2)
+      #exit(2)
     elsif code == 3
       print "Line #{line_counter}: #{var} elements in stack after evaluation"
       exit(3)
     end
   end
 
-  def exit_five
-    print "Line #{line_counter} has an invalid variable."
+  def exit_five(line_counter)
+    print "Line #{line_counter}: Could not evaluate expression"
     exit(5)
   end
 end

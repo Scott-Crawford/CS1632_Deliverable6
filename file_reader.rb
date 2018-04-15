@@ -75,7 +75,7 @@ class FileReader
 
   def define_variable(input)
     ie = InitErrors.new
-    # call_error(5, input[1]) if input[1].length != 1
+    ie.exit_five(@line_counter) if input[1].length != 1
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
     ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
