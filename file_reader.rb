@@ -1,27 +1,34 @@
+require_relative 'init_errors'
 # Methods for reading in rpn files.
 class FileReader
   @stack = []
   @line_counter = 0
   @map = {}
+  @ie = InitErrors.new
 
-  def read_file(arr)
+  def init_values
     @map = {}
     @line_counter = 0
     all_files = curr = []
+    vals = [all_files, curr]
+    vals
+  end
+
+  def read_file(arr)
+    vals = init_values
     arr.each do |file_name|
       if File.file?(file_name)
-        curr = File.readlines(file_name)
-        curr.each(&:chomp!)
-        all_files.push(curr)
+        vals[1] = File.readlines(file_name)
+        vals[1].each(&:chomp!)
+        vals[0].push(vals[1])
       else
         puts 'File does not exist with given path.'
       end
-    end
-    all_files
+    end; vals[0]
   end
 
   def check_value(value)
-    exit! if value == 'INVALID'
+    abort if value == 'INVALID'
   end
 
   def check_array_arguments(input)
@@ -36,23 +43,30 @@ class FileReader
   def execute_rpn(file)
     file.each do |line|
       line.each do |inner|
-        @line_counter+=1
+        @line_counter += 1
+        inner = inner.split(' ')
         check_first_file_element(inner)
       end
     end
   end
 
-  def check_first_file_element(input)
+  def quit_branch(input)
+    return 'INVALID' if input[0] == 'QUIT'
+  end
+
+  def branches(input)
+    value = quit_branch(input)
+    check_value(value)
+    define_variable(input) if input[0] == 'LET'
+  end
+
+  def check_first_file_element(first_element)
     @stack = []
-    first_element = input.split(' ')
-    if %w[LET PRINT QUIT].include?(first_element[0])
-      if first_element[0] == 'QUIT'
-        exit!
-      elsif first_element[0] == 'LET'
-        define_variable(first_element)
-      elsif first_element[0] == 'PRINT'
+    if first_element[0] =~ /LET|PRINT|QUIT/
+      branches(first_element)
+      if first_element[0] == 'PRINT'
         do_math(first_element[1..first_element.length - 1])
-        call_error(3, @stack.length) if @stack.length > 1
+        @ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
         puts @stack[0]
       end
       true
@@ -60,25 +74,22 @@ class FileReader
   end
 
   def define_variable(input)
+    ie = InitErrors.new
+    ie.exit_five(@line_counter) if input[1].length != 1
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
-    call_error(3, @stack.length) if @stack.length > 1
+    ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
     @map[input[1].upcase] = val[0] unless val.empty?
     @stack.clear
   end
 
-  def call_error(code, var)
-    if  code == 1
-      print "Line #{@line_counter}: #{var} is not initialized"
-      exit(1)
-    elsif code == 2
-      print "Line #{@line_counter}: Operator #{var} applied to empty stack" 
-      exit(2)
-    elsif code == 3
-      print "Line #{@line_counter}: #{var} elements in stack after evaluation"
-      exit(3)
+  def do_more_math(input)
+    ie = InitErrors.new
+    if @map.key?(input.upcase)
+      @stack.push(@map[input.upcase])
     else
-      exit(5)
+      ie.call_error(1, input, @line_counter)
+      []
     end
   end
 
@@ -87,12 +98,7 @@ class FileReader
       if %w[+ - * /].include?(i)
         return [] unless handle_operators(i)
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
-        if @map.key?(i.upcase)
-          @stack.push(@map[i.upcase])
-        else
-          call_error(1, i)
-          return []
-        end
+        do_more_math(i)
       else
         @stack.push(i)
       end
@@ -112,8 +118,9 @@ class FileReader
   end
 
   def init_operands(opt)
+    ie = InitErrors.new
     if @stack.length < 2
-      call_error(2, opt)
+      ie.call_error(2, opt, @line_counter)
       []
     else
       a = @stack.pop.to_i
