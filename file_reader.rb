@@ -23,21 +23,25 @@ class FileReader
         vals[1].each(&:chomp!)
         vals[0].push(vals[1])
       else
-        puts 'File does not exist with given path.'
+        return 'INV'
       end
     end; vals[0]
   end
 
-  def check_value(value)
-    abort if value == 'INV'
+  def check_array_arguments(input)
+    @error_data = []
+    input.each do |file|
+      return @error_data = [5, 0, -1] if (file[-3..-1] || file).strip != 'rpn'
+    end
   end
 
-  def check_array_arguments(input)
-    input.each do |file|
-      if (file[-3..-1] || file).strip != 'rpn'
-        puts 'Supplied file does not have the .rpn extension!'
-        return 'INV'
-      end
+  def parse_line(input)
+    input.each do |element|
+      a = element.length == 1 && element.match(/[A-Za-z]/)
+      b = %w[+ - / * LET PRINT QUIT].include?(element)
+      c = element.to_i.to_s == element
+      @error_data = [4, element, @line_counter] unless a || b || c
+      return 'INV' unless a || b || c
     end
   end
 
@@ -47,6 +51,7 @@ class FileReader
         @stack = []
         @line_counter += 1
         inner = inner.split(' ')
+        return @error_data if parse_line(inner).eql? 'INV'
         check_first_file_element(inner)
         return @error_data unless @error_data.empty?
       end
@@ -58,8 +63,7 @@ class FileReader
   end
 
   def branches(input)
-    value = quit_branch(input)
-    check_value(value)
+    quit_branch(input)
     val = define_variable(input) if input[0] == 'LET'
     return 'INV' if val == 'INV'
   end

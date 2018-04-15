@@ -12,8 +12,9 @@ class ArgsChecker
     else
       fr = FileReader.new
       value = fr.check_array_arguments(arr)
-      fr.check_value(value)
+      return value unless value.is_a?(Array)
       concat = fr.read_file(arr)
+      return [5, 0, -1] if concat == 'INV'
       vals = fr.execute_rpn(concat)
       return vals
     end

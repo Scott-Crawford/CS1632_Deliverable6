@@ -2,19 +2,26 @@
 class InitErrors
   def call_error(code, var, line_counter)
     if code == 1
-      print "Line #{line_counter}: Variable #{var} is not initialized"
+      puts "Line #{line_counter}: Variable #{var} is not initialized"
       exit(1)
     elsif code == 2
-      print "Line #{line_counter}: Operator #{var} applied to empty stack"
+      puts "Line #{line_counter}: Operator #{var} applied to empty stack"
       exit(2)
     elsif code == 3
-      print "Line #{line_counter}: #{var} elements in stack after evaluation"
+      puts "Line #{line_counter}: #{var} elements in stack after evaluation"
       exit(3)
+    elsif code == 4
+      puts "Line #{line_counter}: Unknown keyword #{var}"
+      exit(4)
     end
   end
 
   def exit_five(line_counter)
-    print "Line #{line_counter}: Could not evaluate expression"
+    if line_counter == -1
+      puts "File cannot be found and/or read!"
+    else
+      puts "Line #{line_counter}: Could not evaluate expression!"
+    end
     exit(5)
   end
 end
