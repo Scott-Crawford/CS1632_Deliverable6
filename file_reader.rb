@@ -28,7 +28,7 @@ class FileReader
   end
 
   def check_value(value)
-    exit! if value == 'INVALID'
+    abort if value == 'INVALID'
   end
 
   def check_array_arguments(input)
@@ -51,11 +51,12 @@ class FileReader
   end
 
   def quit_branch(input)
-    exit! if input[0] == 'QUIT'
+    return 'INVALID' if input[0] == 'QUIT'
   end
 
   def branches(input)
-    quit_branch(input)
+    value = quit_branch(input)
+    check_value(value)
     define_variable(input) if input[0] == 'LET'
   end
 
@@ -65,7 +66,7 @@ class FileReader
       branches(first_element)
       if first_element[0] == 'PRINT'
         do_math(first_element[1..first_element.length - 1])
-        @ie.call_error(3, @stack.length) if @stack.length > 1
+        @ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
         puts @stack[0]
       end
       true
@@ -77,7 +78,7 @@ class FileReader
     # call_error(5, input[1]) if input[1].length != 1
     @map = {} if @map.nil?
     val = do_math(input[2..input.length - 1])
-    ie.call_error(3, @stack.length) if @stack.length > 1
+    ie.call_error(3, @stack.length, @line_counter) if @stack.length > 1
     @map[input[1].upcase] = val[0] unless val.empty?
     @stack.clear
   end
@@ -87,7 +88,7 @@ class FileReader
     if @map.key?(input.upcase)
       @stack.push(@map[input.upcase])
     else
-      ie.call_error(1, input)
+      ie.call_error(1, input, @line_counter)
       []
     end
   end
@@ -119,7 +120,7 @@ class FileReader
   def init_operands(opt)
     ie = InitErrors.new
     if @stack.length < 2
-      ie.call_error(2, opt)
+      ie.call_error(2, opt, @line_counter)
       []
     else
       a = @stack.pop.to_i
