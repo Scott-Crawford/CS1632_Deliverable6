@@ -108,7 +108,10 @@ class FileReader
 
   def do_math(input)
     input.each do |i|
-      if %w[+ - * /].include?(i)
+      if %w[LET PRINT QUIT].include?(i.upcase)
+        @error_data = [5, 0, @line_counter]
+        return []
+      elsif %w[+ - * /].include?(i)
         return [] unless handle_operators(i)
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
         return [] unless do_more_math(i)

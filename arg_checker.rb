@@ -88,7 +88,10 @@ class ArgsChecker
 
   def do_math(input)
     input.each do |i|
-      if %w[+ - * /].include?(i)
+      if %w[LET PRINT QUIT].include?(i.upcase)
+        call_error(5, 0)
+        return []
+      elsif %w[+ - * /].include?(i)
         return [] unless handle_operators(i)
       elsif i.length == 1 && i.match(/[a-zA-Z]/)
         if @map.key?(i.upcase)
