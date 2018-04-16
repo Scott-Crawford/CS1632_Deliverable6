@@ -1,4 +1,3 @@
-require_relative 'init_errors'
 # Methods for reading in rpn files.
 class FileReader
   @stack = []
@@ -36,6 +35,9 @@ class FileReader
   end
 
   def parse_line(input)
+    return if input[0].nil?
+    @error_data = [0, 0, 0] if input[0].casecmp('QUIT').zero?
+    return 'INV' if input[0].casecmp('QUIT').zero?
     input.each do |element|
       a = element.length == 1 && element.match(/[A-Za-z]/)
       b = %w[+ - / * LET PRINT QUIT].include?(element.upcase)
@@ -55,41 +57,41 @@ class FileReader
         check_first_file_element(inner)
         return @error_data unless @error_data.empty?
       end
-    end
-  end
-
-  def quit_branch(input)
-    return 'INV' if input[0].upcase == 'QUIT'
+    end; []
   end
 
   def branches(input)
-    quit_branch(input)
-    val = define_variable(input) if input[0].upcase == 'LET'
+    val = define_variable(input) if input[0].casecmp('LET').zero?
     return 'INV' if val == 'INV'
   end
 
   def check_first_file_element(first_el)
+    return if first_el[0].nil?
     if first_el[0].upcase =~ /LET|PRINT|QUIT/
       val = branches(first_el)
       return 'INV' if val == 'INV'
-      if first_el[0].upcase == 'PRINT'
+      if first_el[0].casecmp('PRINT').zero?
         return 'INV' if do_math(first_el[1..first_el.length - 1]) == []
         @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
         return 'INV' if @stack.length > 1
         puts @stack[0]
       end
+    else
+      do_math(first_el)
+      @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
+      return 'INV' if @stack.length > 1
     end
   end
 
-  def define_variable(input)
-    c = input[1].length == 1
-    @error_data = [5, 0, @line_counter] unless c && input[1].match(/[a-zA-Z]/)
-    return 'INV' unless c && input[1].match(/[a-zA-Z]/) || c
+  def define_variable(inp)
+    c = !inp[1].nil? && inp[1].length == 1 && inp[1].match(/[a-zA-Z]/)
+    @error_data = [5, 0, @line_counter] unless c && inp.length > 2
+    return 'INV' unless c && inp[1].match(/[a-zA-Z]/) || c
     @map = {} if @map.nil?
-    val = do_math(input[2..input.length - 1])
+    val = do_math(inp[2..inp.length - 1])
     @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
     return 'INV' if @stack.length > 1
-    @map[input[1].upcase] = val[0] unless val.empty?
+    @map[inp[1].upcase] = val[0] unless val.empty?
     return 'INV' if val.empty?
     @stack.clear
   end
@@ -121,9 +123,11 @@ class FileReader
     operands = init_operands(opt)
     if operands.empty?
       false
+    elsif operands[0].zero? && opt == '/'
+      @error_data = [5, 0, @line_counter]
+      false
     else
-      operands[2] = operands[1].send opt, operands[0]
-      @stack.push(operands[2])
+      @stack.push(operands[1].send(opt, operands[0]))
       true
     end
   end
@@ -135,8 +139,7 @@ class FileReader
     else
       a = @stack.pop.to_i
       b = @stack.pop.to_i
-      c = 0
-      [a, b, c]
+      [a, b]
     end
   end
 end
