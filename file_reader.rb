@@ -1,9 +1,7 @@
 # Methods for reading in rpn files.
 class FileReader
-  @stack = []
-  @line_counter = 0
+  @error_data = @stack = []
   @map = {}
-  @error_data = []
 
   def init_values
     @map = {}
@@ -17,14 +15,12 @@ class FileReader
   def read_file(arr)
     vals = init_values
     arr.each do |file_name|
-      if File.file?(file_name)
-        vals[1] = File.readlines(file_name)
-        vals[1].each(&:chomp!)
-        vals[0].push(vals[1])
-      else
-        return 'INV'
-      end
-    end; vals[0]
+      return 'INV' unless File.file?(file_name)
+      vals[1] = File.readlines(file_name)
+      vals[1].each(&:chomp!)
+      vals[0].push(vals[1])
+    end
+    vals[0]
   end
 
   def check_array_arguments(input)
@@ -68,8 +64,7 @@ class FileReader
   def check_first_file_element(first_el)
     return if first_el[0].nil?
     if first_el[0].upcase =~ /LET|PRINT|QUIT/
-      val = branches(first_el)
-      return 'INV' if val == 'INV'
+      return 'INV' if branches(first_el) == 'INV'
       if first_el[0].casecmp('PRINT').zero?
         return 'INV' if do_math(first_el[1..first_el.length - 1]) == []
         @error_data = [3, @stack.length, @line_counter] if @stack.length > 1
