@@ -15,14 +15,12 @@ class FileReader
   def read_file(arr)
     vals = init_values
     arr.each do |file_name|
-      if File.file?(file_name)
-        vals[1] = File.readlines(file_name)
-        vals[1].each(&:chomp!)
-        vals[0].push(vals[1])
-      else
-        return 'INV'
-      end
-    end; vals[0]
+      return 'INV' unless File.file?(file_name)
+      vals[1] = File.readlines(file_name)
+      vals[1].each(&:chomp!)
+      vals[0].push(vals[1])
+    end
+    vals[0]
   end
 
   def check_array_arguments(input)
