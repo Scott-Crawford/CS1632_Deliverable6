@@ -14,7 +14,7 @@ class ArgCheckerTest < Minitest::Test
     assert_equal output, "> " 
   end
 
-    # This test checks if an existing file is read in by file_reader.
+  # This test checks if an existing file is read in by file_reader.
   def test_check_existent_file
     file_args = ["../CS1632_Deliverable6/File1.rpn"]
     assert_output("") {@arg_checker.read_file(file_args)}
@@ -81,5 +81,8 @@ class ArgCheckerTest < Minitest::Test
     assert_nil @arg_checker.branches(input)
   end
 
-
+  def test_check_first_element_input
+    input = []
+    assert_nil @arg_checker.check_first_element(input)
+  end
 end
