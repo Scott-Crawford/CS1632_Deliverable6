@@ -93,18 +93,47 @@ class ArgCheckerTest < Minitest::Test
     val = @arg_checker.check_first_element(input)
     assert_nil val
   end
-
-  # This test checks that an empty array is returned from a valid LET.
-  def test_define_variable_valid
-    input = ['LET', 'A', '1']
-    val = @arg_checker.define_variable(input)
-    assert_equal val, []
-  end
-
-  # This test checks that the correct error message is displayed for an empty declaration.
-  def test_define_variable_invalid
-    input = []
+  
+  def test_define_variable_nil
+    input = ["LET"]
     assert_output("Line 0: Could not evaluate expression\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_question_mark
+    input = ["LET", "?", "1"]
+    assert_output("Line 0: Could not evaluate expression\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_laboon
+    input = ["LET", "laboon", "1"]
+    assert_output("Line 0: Could not evaluate expression\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_no_rpn
+    input = ["LET", "a"]
+    assert_output("Line 0: Could not evaluate expression\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_no_operator_rpn
+    input = ["LET", "a", "1", "1"]
+    assert_output("Line 0: 2 elements in stack after evaluation\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_empty_stack_rpn
+    input = ["LET", "a", "1", "+"]
+    assert_output("Line 0: Operator + applied to empty stack\n") {@arg_checker.define_variable(input)}
+    assert_equal Hash.new, @arg_checker.map
+  end
+  
+  def test_define_variable_valid
+    input = ["LET", "A", "1", "1", "+"]
+    assert_output("2\n") {@arg_checker.define_variable(input)}
+    assert_equal 2, @arg_checker.map["A"]
   end
 
   # This test checks that the correct error message is displayed for code 1.
@@ -164,48 +193,6 @@ class ArgCheckerTest < Minitest::Test
     assert_equal val, input
   end
   
-  def test_define_variable_nil
-    input = ["LET"]
-    assert_output("Line 0: Could not evaluate expression \n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_question_mark
-    input = ["LET", "?", "1"]
-    assert_output("Line 0: Could not evaluate expression \n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_laboon
-    input = ["LET", "laboon", "1"]
-    assert_output("Line 0: Could not evaluate expression \n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_no_rpn
-    input = ["LET", "a"]
-    assert_output("Line 0: Could not evaluate expression \n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_no_operator_rpn
-    input = ["LET", "a", "1", "1"]
-    assert_output("Line 0: 2 elements in stack after evaluation\n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_empty_stack_rpn
-    input = ["LET", "a", "1", "+"]
-    assert_output("Line 0: Operator + applied to empty stack\n") {@arg_checker.define_variable(input)}
-    assert_equal Hash.new, @arg_checker.map
-  end
-  
-  def test_define_variable_valid
-    input = ["LET", "A", "1", "1", "+"]
-    assert_output("2\n") {@arg_checker.define_variable(input)}
-    assert_equal 2, @arg_checker.map["A"]
-  end
-  
   def test_handle_more_true
     input = ["LET", "A", "1", "1", "+"]
     val = true
@@ -228,7 +215,7 @@ class ArgCheckerTest < Minitest::Test
   def test_do_math_middle_keyword
     input = ["1", "PRINT", "+"]
     val = 0
-    assert_output("Line 0: Could not evaluate expression \n") {val = @arg_checker.do_math(input)}
+    assert_output("Line 0: Could not evaluate expression\n") {val = @arg_checker.do_math(input)}
     assert_equal [], val
   end
   
@@ -247,7 +234,7 @@ class ArgCheckerTest < Minitest::Test
   def test_do_math_divide_by_zero
     input = ["1", "0", "/"]
     val = 0
-    assert_output("Line 0: Could not evaluate expression \n") {val = @arg_checker.do_math(input)}
+    assert_output("Line 0: Could not evaluate expression\n") {val = @arg_checker.do_math(input)}
     assert_equal [], val
   end
   
@@ -261,6 +248,14 @@ class ArgCheckerTest < Minitest::Test
   def test_do_math_valid
     input = ["1", "1", "1", "1", "1", "-", "+", "*", "/"]
     assert_equal [1], @arg_checker.do_math(input)
+  end
+  
+  def test_do_math_valid_variable
+    @arg_checker.map["A"] = 1
+    input = ["a"]
+    val=0
+    assert_output("") {val = @arg_checker.do_math(input)}
+    assert_equal [1], @arg_checker.stack
   end
   
   def test_init_operands_one
@@ -391,5 +386,104 @@ class ArgCheckerTest < Minitest::Test
     assert_equal [1, "a", 0], @arg_checker.error_data
     assert_equal false, val
     assert_equal [], @arg_checker.stack
+  end
+  
+  def test_do_file_math_middle_keyword
+    input = ["1", "PRINT", "+"]
+    val = 0
+    assert_output("") {val = @arg_checker.do_file_math(input)}
+    assert_equal [], val
+    assert_equal [5, 0, 0], @arg_checker.error_data
+  end
+  
+  def test_do_file_math_empty_stack
+    input = ["1", "+"]
+    val = 0
+    assert_output("") {val = @arg_checker.do_file_math(input)}
+    assert_equal [], val
+    assert_equal [2, "+", 0], @arg_checker.error_data
+  end
+  
+  def test_do_file_math_missing_operator
+    input = ["1", "1", "1", "+"]
+    assert_equal ["1", 2], @arg_checker.do_file_math(input)
+    assert_equal [], @arg_checker.error_data
+  end
+  
+  def test_do_file_math_divide_by_zero
+    input = ["1", "0", "/"]
+    val = 0
+    assert_output("") {val = @arg_checker.do_file_math(input)}
+    assert_equal [], val
+    assert_equal [5, 0, 0], @arg_checker.error_data
+  end
+  
+  def test_do_file_math_unitialized_variable
+    input = ["a", "1", "+"]
+    val = 0
+    assert_output("") {val = @arg_checker.do_file_math(input)}
+    assert_equal [], val
+    assert_equal [1, "a", 0], @arg_checker.error_data
+  end
+  
+  def test_do_file_math_valid
+    input = ["1", "1", "1", "1", "1", "-", "+", "*", "/"]
+    assert_equal [1], @arg_checker.do_file_math(input)
+    assert_equal [], @arg_checker.error_data
+  end
+  
+  def test_handle_file_operators_empty_operands
+    input = "+"
+    val = 0
+    assert_output("") {val = @arg_checker.handle_file_operators(input)}
+    assert_equal false, val
+    assert_equal [2, "+", 0], @arg_checker.error_data
+  end
+  
+  def test_handle_file_operators_divide_by_zero
+    @arg_checker.stack = ["1", "0"]
+    input = "/"
+    val = 0
+    assert_output("") {val = @arg_checker.handle_file_operators(input)}
+    assert_equal false, val
+    assert_equal [5, 0, 0], @arg_checker.error_data
+  end
+  
+  def test_handle_file_operators_valid
+    @arg_checker.stack = ["5", "3"]
+    input = "-"
+    val = 0
+    assert_output("") {val = @arg_checker.handle_file_operators(input)}
+    assert_equal true, val
+    assert_equal [], @arg_checker.error_data
+    assert_equal [2], @arg_checker.stack
+  end
+  
+  def test_init_file_operands_one
+    @arg_checker.stack = ["5"]
+    input = "-"
+    val = 0
+    assert_output("") {val = @arg_checker.init_file_operands(input)}
+    assert_equal [], val
+    assert_equal [2, "-", 0], @arg_checker.error_data
+  end
+  
+  def test_init_file_operands_two
+    @arg_checker.stack = ["5", "3"]
+    input = "-"
+    val = 0
+    assert_output("") {val = @arg_checker.init_file_operands(input)}
+    assert_equal [3, 5], val
+    assert_equal [], @arg_checker.error_data
+  end
+  
+  def test_init_file_operands_three
+    @arg_checker.stack = ["5", "3", "1"]
+    input = "-"
+    val = 0
+    assert_output("") {val = @arg_checker.init_file_operands(input)}
+    assert_equal [1, 3], val
+    assert_equal [], @arg_checker.error_data
+    assert_equal ["5"], @arg_checker.stack
   end
 end
