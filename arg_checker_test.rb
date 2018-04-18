@@ -7,13 +7,6 @@ class ArgCheckerTest < Minitest::Test
     @arg_checker = ArgsChecker.new
   end
 
-  def test_run_repl
-    skip
-    @arg_checker.run_repl
-    output = "> "
-    assert_equal output, "> " 
-  end
-
   # This test checks if an existing file is read in by file_reader.
   def test_check_existent_file
     file_args = ["../CS1632_Deliverable6/File1.rpn"]
@@ -68,7 +61,7 @@ class ArgCheckerTest < Minitest::Test
 
   def test_do_math_empty
     val = @arg_checker.do_file_math([])
-    assert_nil val
+    assert_equal val, []
   end
 
   def test_branches_valid_let
@@ -81,8 +74,79 @@ class ArgCheckerTest < Minitest::Test
     assert_nil @arg_checker.branches(input)
   end
 
-  def test_check_first_element_input
+  def test_check_first_element_input_empty
     input = []
     assert_nil @arg_checker.check_first_element(input)
   end
+
+  def test_check_first_element_let
+    input = 'LET A 1'
+    val = @arg_checker.check_first_element(input)
+    assert_nil val
+  end
+
+  def test_check_first_element_print
+    input = 'PRINT 1 1 +'
+    val = @arg_checker.check_first_element(input)
+    assert_nil val
+  end
+
+  def test_define_variable_valid
+    input = ['LET', 'A', '1']
+    val = @arg_checker.define_variable(input)
+    assert_equal val, []
+  end
+
+  def test_define_variable_invalid
+    input = []
+    assert_output("Line 0: Could not evaluate expression\n") {@arg_checker.define_variable(input)}
+  end
+
+  def test_call_error_code_one
+    assert_output("Line 0: Variable A is not initialized\n") {@arg_checker.call_error(1, 'A')}
+  end
+
+  def test_handle_input_quit
+    input = 'QUIT'
+    val = @arg_checker.handle_input(input)
+    assert_equal val, 'QUIT'
+  end
+
+  def test_handle_input_let_unkown_keyword
+    input = 'LET CDD 27'
+    assert_output("Line 1: Unknown keyword CDD\n") {@arg_checker.handle_input(input)}
+  end
+
+  def test_init_operands_add
+    input = '+'
+    assert_output("Line 0: Operator + applied to empty stack\n") {@arg_checker.init_operands(input)}
+  end
+
+  def test_handle_operators_subtract
+    input = '-'
+    assert_output("Line 0: Operator - applied to empty stack\n") {@arg_checker.handle_operators(input)}
+  end
+
+  def test_handle_operators_division_by_zero
+    skip
+    input = '/'
+    assert_output("Line 0: Operator / applied to empty stack\n") {@arg_checker.handle_operators(input)}
+  end
+
+  def test_parse_file_line_empty
+    input = []
+    assert_nil @arg_checker.parse_file_line(input)
+  end
+
+  def test_parse_file_line_quit
+    input = ['QUIT']
+    assert_equal @arg_checker.parse_file_line(input), 'INV'
+  end
+
+  def test_parse_file_line_invalid
+    input = ['PRINT', '1', 'd', '+']
+    val = @arg_checker.parse_file_line(input)
+    assert_equal val, input
+  end
+
 end

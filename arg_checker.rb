@@ -1,8 +1,10 @@
 # Class that checks the file argument provided by user.
 class ArgsChecker
-  @error_data = @stack = []
-  @lin_c = 0
-  @map = {}
+  def initialize
+    @error_data = @stack = []
+    @lin_c = 0
+    @map = {}
+  end
 
   def check_args(arr)
     @lin_c = 0
@@ -50,7 +52,7 @@ class ArgsChecker
     puts "Line #{@lin_c}: Operator #{var} applied to empty stack" if cod == 2
     puts "Line #{@lin_c}: #{var} elements in stack after evaluation" if cod == 3
     puts "Line #{@lin_c}: Unknown keyword #{var}" if cod == 4
-    puts "Line #{@lin_c}: Could not evaluate expression " if cod == 5
+    puts "Line #{@lin_c}: Could not evaluate expression" if cod == 5
     @stack.clear
   end
 
@@ -78,7 +80,7 @@ class ArgsChecker
     input = input.split(' ')
     value = parse_line(input)
     return value if value == 'QUIT'
-    unless  value == 'INV'
+    unless value == 'INV'
       val = check_first_element(input)
       handle_more(input, val)
     end
