@@ -1,4 +1,4 @@
-# Class
+# Class that defines functions to call errors with codes.
 class InitErrors
   def call_error(code, var, line_counter, quit)
     if code == 1
