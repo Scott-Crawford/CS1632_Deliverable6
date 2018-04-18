@@ -792,4 +792,40 @@ class ArgCheckerTest < Minitest::Test
     assert_output("") {val = @arg_checker.parse_line(input)}
     assert_equal val, input
   end
+  
+  # Asserts that the program can handle large numbers
+  def test_large_numbers
+    input = "999999999999999999 999999999999999999 *"
+    assert_output("999999999999999998000000000000000001\n") {@arg_checker.handle_input(input)}
+  end
+  
+  # Asserts that variables are case insensitive
+  def test_variable_case_insensitive
+    input = 'LET A 1'
+    assert_output("1\n") {@arg_checker.handle_input(input)}
+    input = 'a'
+    assert_output("1\n") {@arg_checker.handle_input(input)}
+    input = 'LET b 2'
+    assert_output("2\n") {@arg_checker.handle_input(input)}
+    input = 'B'
+    assert_output("2\n") {@arg_checker.handle_input(input)}
+  end
+  
+  # Asserts that keywords are case insensitive
+  def test_keyword_case_insensitive
+    input = 'LET A 1'
+    assert_output("1\n") {@arg_checker.handle_input(input)}
+    input = 'let B 2'
+    assert_output("2\n") {@arg_checker.handle_input(input)}
+    input = 'LeT C 3'
+    assert_output("3\n") {@arg_checker.handle_input(input)}
+  end
+  
+  # Asserts that PRINT doesn't do any additional work in REPL mode
+  def test_repl_print
+    input = 'PRINT 1 1 +'
+    assert_output("2\n") {@arg_checker.handle_input(input)}
+    input = '1 1 +'
+    assert_output("2\n") {@arg_checker.handle_input(input)}
+  end
 end
