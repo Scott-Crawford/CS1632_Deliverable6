@@ -1,7 +1,13 @@
 # Class that checks the file argument provided by user.
 class ArgsChecker
+  attr_accessor :stack
+  attr_reader :lin_c
+  attr_accessor :map
+  attr_reader :error_data
+
   def initialize
-    @error_data = @stack = []
+    @error_data = []
+    @stack = []
     @lin_c = 0
     @map = {}
   end
